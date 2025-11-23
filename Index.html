@@ -1,0 +1,270 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinite Platformer Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="ui-overlay">
+            <div class="score">Score: <span id="score">0</span></div>
+            <div class="level-info">
+                <div class="level">Level: <span id="level">1</span></div>
+                <div class="level-progress">Progress: <span id="levelProgress">0%</span></div>
+            </div>
+            <div class="health">Health: <span id="health">100</span></div>
+            <div class="account-info" id="accountInfo" style="display: none;">
+                <span id="currentUser">Guest</span>
+                <button onclick="showAccountMenu()" class="account-btn">👤</button>
+            </div>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+        <div class="game-over" id="gameOver" style="display: none;">
+            <h2>Game Over!</h2>
+            <p>Final Score: <span id="finalScore">0</span></p>
+            <p>Final Level: <span id="finalLevel">1</span></p>
+            <button onclick="restartGame()">Restart</button>
+            <button onclick="hideLeaderboard()">Close Leaderboard</button>
+        </div>
+        
+        <!-- Leaderboard -->
+        <div class="leaderboard" id="leaderboard" style="display: none;">
+            <div class="leaderboard-header">
+                <h3>🏆 Leaderboard</h3>
+                <div class="leaderboard-controls">
+                    <button onclick="resetLeaderboard()" class="reset-leaderboard" title="Reset Leaderboard">🗑️</button>
+                    <button onclick="hideLeaderboard()" class="close-leaderboard">✕</button>
+                </div>
+            </div>
+            <div class="leaderboard-list" id="leaderboardList">
+                <!-- Leaderboard entries will be populated here -->
+            </div>
+        </div>
+        <div class="instructions">
+            <p><strong>Controls:</strong></p>
+            <p>← → Arrow Keys: Move</p>
+            <p>Spacebar: Jump</p>
+            <p><strong>⚠️ Don't Touch Floor!</strong></p>
+            <p><strong>Powerups:</strong></p>
+            <p>🟢 Health (+30 HP)</p>
+            <p>🔵 Speed Boost (5s)</p>
+            <p>🟠 Jump Boost (5s)</p>
+            <p>🟣 Shield (10s)</p>
+            <p>🩷 Double Jump (15s)</p>
+            <p>🟡 Score Multiplier</p>
+            <p>🔴 Invincibility (5s)</p>
+            <p>🩷 Magnet (10s)</p>
+            <p>🔷 Time Slow (5s)</p>
+            <p>🟠 Explosive (1 use)</p>
+            <p>🟣 Super Jump (7.5s)</p>
+            <p>🟡 Coin (+50 pts)</p>
+            <p>🟣 Teleport (1 use)</p>
+            <p>🩷 Multi Jump (10s)</p>
+            <p>🔵 Freeze (5s)</p>
+            <p>🔴 Laser (7.5s)</p>
+            <p>⚪ Ghost (5s)</p>
+            <p>🟠 Rocket (1 use)</p>
+            <p>🟣 Shield Burst (1 use)</p>
+            <p>🟡 Mega Coin (+200 pts)</p>
+            <p>🩷 Rainbow (10s)</p>
+            <p>⚫ Gravity (5s)</p>
+            <p><strong>Enemies:</strong></p>
+            <p>🟠 Walker - Jump on to defeat!</p>
+            <p>🟣 Flyer - Flying enemy</p>
+            <p>🟠 Spiker - Stationary spikes</p>
+            <p>🔴 Boss - Strong enemy (3 hits)</p>
+            <p>🟣 Mega Boss - Earthquake attacks (5 hits)</p>
+            <p>🌈 Rainbow Boss - Color cycling (4 hits)</p>
+            <p>🔥 Fire Boss - Flame attacks (4 hits)</p>
+            <p>❄️ Ice Boss - Frost attacks (4 hits)</p>
+            <p>🌑 Shadow Boss - Teleport (4 hits)</p>
+            <p>⚡ Lightning Boss - Electric (4 hits)</p>
+        </div>
+        <div class="audio-controls">
+            <button id="muteBtn" onclick="toggleMute()">🔊</button>
+            <input type="range" id="volumeSlider" min="0" max="100" value="70" onchange="setVolume(this.value)">
+            <button id="youtubeBtn" onclick="toggleYouTube()">🌮 TACOS 🌮</button>
+            <button id="avatarBtn" onclick="toggleAvatarMenu()">👤</button>
+            <button id="levelBtn" onclick="toggleLevelMenu()">🎮</button>
+            <button id="performanceBtn" onclick="togglePerformanceMode()" title="Toggle Performance Mode">⚡</button>
+            <button id="accountMenuBtn" onclick="showAccountMenu()" title="Account Menu">🔐</button>
+        </div>
+        
+        <!-- Account System -->
+        <div id="accountMenu" class="account-menu" style="display: none;">
+            <div class="account-header">
+                <h3>🔐 Account</h3>
+                <button onclick="hideAccountMenu()" class="close-account">✕</button>
+            </div>
+            <div id="accountLogin" class="account-section">
+                <h4>Login</h4>
+                <input type="text" id="loginUsername" placeholder="Username" maxlength="20" onkeypress="if(event.key==='Enter') login()">
+                <input type="password" id="loginPassword" placeholder="Password" maxlength="50" onkeypress="if(event.key==='Enter') login()">
+                <button onclick="login()" class="account-action-btn">Login</button>
+                <p class="account-switch">Don't have an account? <a href="#" onclick="showRegister()">Register</a></p>
+            </div>
+            <div id="accountRegister" class="account-section" style="display: none;">
+                <h4>Register</h4>
+                <input type="text" id="registerUsername" placeholder="Username" maxlength="20" onkeypress="if(event.key==='Enter') document.getElementById('registerPassword').focus()">
+                <input type="password" id="registerPassword" placeholder="Password" maxlength="50" onkeypress="if(event.key==='Enter') document.getElementById('registerConfirmPassword').focus()">
+                <input type="password" id="registerConfirmPassword" placeholder="Confirm Password" maxlength="50" onkeypress="if(event.key==='Enter') register()">
+                <button onclick="register()" class="account-action-btn">Register</button>
+                <p class="account-switch">Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
+            </div>
+            <div id="accountLoggedIn" class="account-section" style="display: none;">
+                <h4>Logged in as: <span id="loggedInUsername"></span></h4>
+                <div class="account-stats">
+                    <p>Best Score: <span id="accountBestScore">0</span></p>
+                    <p>Highest Level: <span id="accountBestLevel">1</span></p>
+                    <p>Games Played: <span id="accountGamesPlayed">0</span></p>
+                </div>
+                <button onclick="logout()" class="account-action-btn logout-btn">Logout</button>
+                <button onclick="switchAccount()" class="account-action-btn switch-btn">Switch Account</button>
+            </div>
+        </div>
+        
+        <!-- YouTube Music Player -->
+        <div id="youtubePlayer" class="youtube-player" style="display: none;">
+            <div class="youtube-header">
+                <h3>🌮 IT'S RAINING TACOS 1 HOUR 🌮</h3>
+                <button onclick="toggleYouTube()" class="close-youtube">✕</button>
+            </div>
+            <div class="youtube-search">
+                <p>Search for "It's Raining Tacos 1 Hour" on YouTube:</p>
+                <input type="text" id="youtubeSearch" placeholder="It's Raining Tacos 1 Hour..." onkeypress="handleYouTubeSearch(event)">
+                <button onclick="searchYouTube()" class="search-btn">Search</button>
+            </div>
+            <iframe id="youtubeFrame" width="300" height="169" 
+                    src=""
+                    title="Background Music" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+            </iframe>
+        </div>
+        
+        <!-- Avatar Customization Menu -->
+        <div id="avatarMenu" class="customization-menu" style="display: none;">
+            <div class="menu-header">
+                <h3>👤 Avatar Customization</h3>
+                <button onclick="toggleAvatarMenu()" class="close-menu">✕</button>
+            </div>
+            <div class="avatar-options">
+                <div class="avatar-section">
+                    <h4>Hair Color</h4>
+                    <div class="color-options">
+                        <button class="color-btn" data-hair="#8B4513" style="background: #8B4513;" onclick="changeHairColor('#8B4513')"></button>
+                        <button class="color-btn" data-hair="#000000" style="background: #000000;" onclick="changeHairColor('#000000')"></button>
+                        <button class="color-btn" data-hair="#FFD700" style="background: #FFD700;" onclick="changeHairColor('#FFD700')"></button>
+                        <button class="color-btn" data-hair="#FF69B4" style="background: #FF69B4;" onclick="changeHairColor('#FF69B4')"></button>
+                        <button class="color-btn" data-hair="#00CED1" style="background: #00CED1;" onclick="changeHairColor('#00CED1')"></button>
+                        <button class="color-btn" data-hair="#32CD32" style="background: #32CD32;" onclick="changeHairColor('#32CD32')"></button>
+                    </div>
+                </div>
+                <div class="avatar-section">
+                    <h4>Shirt Color</h4>
+                    <div class="color-options">
+                        <button class="color-btn" data-shirt="#4169E1" style="background: #4169E1;" onclick="changeShirtColor('#4169E1')"></button>
+                        <button class="color-btn" data-shirt="#FF0000" style="background: #FF0000;" onclick="changeShirtColor('#FF0000')"></button>
+                        <button class="color-btn" data-shirt="#00FF00" style="background: #00FF00;" onclick="changeShirtColor('#00FF00')"></button>
+                        <button class="color-btn" data-shirt="#FFD700" style="background: #FFD700;" onclick="changeShirtColor('#FFD700')"></button>
+                        <button class="color-btn" data-shirt="#8A2BE2" style="background: #8A2BE2;" onclick="changeShirtColor('#8A2BE2')"></button>
+                        <button class="color-btn" data-shirt="#FF69B4" style="background: #FF69B4;" onclick="changeShirtColor('#FF69B4')"></button>
+                    </div>
+                </div>
+                <div class="avatar-section">
+                    <h4>Pants Color</h4>
+                    <div class="color-options">
+                        <button class="color-btn" data-pants="#2F4F4F" style="background: #2F4F4F;" onclick="changePantsColor('#2F4F4F')"></button>
+                        <button class="color-btn" data-pants="#000000" style="background: #000000;" onclick="changePantsColor('#000000')"></button>
+                        <button class="color-btn" data-pants="#8B4513" style="background: #8B4513;" onclick="changePantsColor('#8B4513')"></button>
+                        <button class="color-btn" data-pants="#4169E1" style="background: #4169E1;" onclick="changePantsColor('#4169E1')"></button>
+                        <button class="color-btn" data-pants="#DC143C" style="background: #DC143C;" onclick="changePantsColor('#DC143C')"></button>
+                        <button class="color-btn" data-pants="#32CD32" style="background: #32CD32;" onclick="changePantsColor('#32CD32')"></button>
+                    </div>
+                </div>
+                <div class="avatar-section">
+                    <h4>Shoes Color</h4>
+                    <div class="color-options">
+                        <button class="color-btn" data-shoes="#8B0000" style="background: #8B0000;" onclick="changeShoesColor('#8B0000')"></button>
+                        <button class="color-btn" data-shoes="#000000" style="background: #000000;" onclick="changeShoesColor('#000000')"></button>
+                        <button class="color-btn" data-shoes="#FFFFFF" style="background: #FFFFFF; border: 1px solid #ccc;" onclick="changeShoesColor('#FFFFFF')"></button>
+                        <button class="color-btn" data-shoes="#FFD700" style="background: #FFD700;" onclick="changeShoesColor('#FFD700')"></button>
+                        <button class="color-btn" data-shoes="#00CED1" style="background: #00CED1;" onclick="changeShoesColor('#00CED1')"></button>
+                        <button class="color-btn" data-shoes="#FF69B4" style="background: #FF69B4;" onclick="changeShoesColor('#FF69B4')"></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Level Selection Menu -->
+        <div id="levelMenu" class="customization-menu" style="display: none;">
+            <div class="menu-header">
+                <h3>🎮 Level Selection</h3>
+                <button onclick="toggleLevelMenu()" class="close-menu">✕</button>
+            </div>
+            <div class="level-options">
+                <div class="level-section">
+                    <h4>Game Modes</h4>
+                    <div class="level-grid">
+                        <button class="level-btn" onclick="selectLevel('classic')">
+                            <div class="level-icon">🏃</div>
+                            <div class="level-name">Classic</div>
+                            <div class="level-desc">Standard platformer gameplay</div>
+                        </button>
+                        <button class="level-btn" onclick="selectLevel('speed')">
+                            <div class="level-icon">⚡</div>
+                            <div class="level-name">Speed Run</div>
+                            <div class="level-desc">Faster gameplay, more enemies</div>
+                        </button>
+                        <button class="level-btn" onclick="selectLevel('endless')">
+                            <div class="level-icon">♾️</div>
+                            <div class="level-name">Endless</div>
+                            <div class="level-desc">Infinite platforms, no end</div>
+                        </button>
+                        <button class="level-btn" onclick="selectLevel('boss')">
+                            <div class="level-icon">👹</div>
+                            <div class="level-name">Boss Rush</div>
+                            <div class="level-desc">More bosses, epic battles</div>
+                        </button>
+                        <button class="level-btn" onclick="selectLevel('powerup')">
+                            <div class="level-icon">💎</div>
+                            <div class="level-name">Powerup Paradise</div>
+                            <div class="level-desc">Extra powerups everywhere</div>
+                        </button>
+                        <button class="level-btn" onclick="selectLevel('hardcore')">
+                            <div class="level-icon">💀</div>
+                            <div class="level-name">Hardcore</div>
+                            <div class="level-desc">Extreme difficulty mode</div>
+                        </button>
+                    </div>
+                </div>
+                <div class="level-section">
+                    <h4>Difficulty Settings</h4>
+                    <div class="difficulty-options">
+                        <label class="difficulty-option">
+                            <input type="radio" name="difficulty" value="easy" checked>
+                            <span>Easy - More health, fewer enemies</span>
+                        </label>
+                        <label class="difficulty-option">
+                            <input type="radio" name="difficulty" value="normal">
+                            <span>Normal - Balanced gameplay</span>
+                        </label>
+                        <label class="difficulty-option">
+                            <input type="radio" name="difficulty" value="hard">
+                            <span>Hard - Less health, more enemies</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <audio id="backgroundMusic" loop>
+            <source src="https://www.soundjay.com/misc/sounds/bell-ringing-05.wav" type="audio/wav">
+        </audio>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
